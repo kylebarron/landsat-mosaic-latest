@@ -28,10 +28,6 @@ def dynamodb_client(region: str = 'us-west-2'):
     return boto3.resource("dynamodb", region_name=region)
 
 
-def dynamodb_table(client, table_name):
-    return client.Table(table_name)
-
-
 def fetch_dynamodb(table, quadkey: str) -> Dict:
     return table.get_item(Key={"quadkey": quadkey}).get("Item", {})
 

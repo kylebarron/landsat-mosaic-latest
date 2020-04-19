@@ -3,7 +3,8 @@ import json
 import os
 from typing import List, Optional
 
-import landsat_mosaic_latest.aws as aws
+from landsat_mosaic_latest.aws import (
+    dynamodb_client, fetch_dynamodb, parse_sns_message, write_dynamodb)
 from landsat_mosaic_latest.landsat import _landsat_get_mtl, landsat_parser
 
 
@@ -12,11 +13,11 @@ def main(
         dynamodb_table_name: str = os.environ['DYNAMODB_TABLE_NAME'],
         max_cloud_cover: float = float(os.getenv('MAX_CLOUD_COVER', '20')),
         cloud_cover_land: bool = True):
-    dynamodb_client = aws.dynamodb_client()
-    dynamodb_table = dynamodb_client.Table(dynamodb_table_name)
+    client = dynamodb_client()
+    dynamodb_table = client.Table(dynamodb_table_name)
 
     # Find new scene ids from SNS message
-    scene_ids = aws.parse_sns_message(sns_message)
+    scene_ids = parse_sns_message(sns_message)
 
     for scene_id in scene_ids:
         # Find cloud cover
@@ -41,7 +42,7 @@ def main(
 
 def update_dynamodb_quadkey(dynamodb_table, quadkey, scene_id, path, row):
     # Retrieve existing assets from DynamoDB
-    existing_scene_ids = aws.fetch_dynamodb(dynamodb_table, quadkey)['assets']
+    existing_scene_ids = fetch_dynamodb(dynamodb_table, quadkey)['assets']
 
     # If an existing asset has the same path-row as this one, remove it from the list
     new_scene_ids = []
@@ -56,7 +57,7 @@ def update_dynamodb_quadkey(dynamodb_table, quadkey, scene_id, path, row):
     new_scene_ids.append(scene_id)
 
     # Write new assets to DynamoDB
-    aws.write_dynamodb(dynamodb_table, quadkey, new_scene_ids)
+    write_dynamodb(dynamodb_table, quadkey, new_scene_ids)
 
 
 def find_quadkeys(index_path, path, row,
