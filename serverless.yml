@@ -1,4 +1,12 @@
+# This file created with help from
+# https://github.com/developmentseed/cogeo-mosaic-tiler/blob/master/serverless.yml
+# https://serverless-stack.com/chapters/configure-dynamodb-in-serverless.html
+
 service: landsat-mosaic-latest
+
+custom:
+  # resources/dynamodb-table.yml relies on this
+  tableName: ${opt:table-name}
 
 provider:
   name: aws
@@ -15,12 +23,20 @@ provider:
   #      - "*"
   #    Resource:
   #      - "arn:aws:s3:::${opt:bucket}*"
-  -  Effect: "Allow"
-     Action:
-       - "s3:GetObject"
-       - "s3:HeadObject"
-     Resource:
-       - "arn:aws:s3:::*"
+    - Effect: "Allow"
+      Action:
+        - "s3:GetObject"
+        - "s3:HeadObject"
+      Resource:
+        - "arn:aws:s3:::*"
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      # Restrict our IAM role permissions to
+      # the specific table for the stage
+      Resource:
+        - "Fn::GetAtt": [ LandsatMosaicLatestTable, Arn ]
 
 package:
   artifact: package.zip
@@ -32,7 +48,12 @@ functions:
     timeout: 10
     environment:
       MAX_CLOUD_COVER: ${opt:max-cloud-cover, ''}
-      DYNAMODB_TABLE_NAME: ${opt:table-name}
+      DYNAMODB_TABLE_NAME: ${self:custom.tableName}
       PYTHONWARNINGS: ignore
     events:
       - sns: arn:aws:sns:us-west-2:274514004127:NewSceneHTML
+
+# Create our resources with separate CloudFormation templates
+resources:
+  # DynamoDB
+  - ${file(resources/dynamodb-table.yml)}

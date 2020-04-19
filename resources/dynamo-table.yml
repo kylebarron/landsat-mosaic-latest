@@ -1,0 +1,14 @@
+# From https://serverless-stack.com/chapters/configure-dynamodb-in-serverless.html
+Resources:
+  LandsatMosaicLatestTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:custom.tableName}
+      AttributeDefinitions:
+        - AttributeName: quadkey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: quadkey
+          KeyType: HASH
+      # Set the capacity to auto-scale
+      BillingMode: PAY_PER_REQUEST
