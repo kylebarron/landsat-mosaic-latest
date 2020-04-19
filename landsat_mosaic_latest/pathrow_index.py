@@ -3,15 +3,11 @@ landsat_mosaic_latest.quadkey_index.py: Create path-row to quadkey index
 """
 from typing import List
 
-import mercantile
-from shapely.geometry import Polygon, asShape
-from shapely.prepared import prep
-
 
 def create_index(path, quadkey_zoom):
     """Create index of path-row to quadkey_zoom
     """
-    # Dynamic import so that geopandas doesn't need to be global dependency
+    # Dynamic import to remove global dependencies
     import geopandas as gpd
 
     # Load shapefile
@@ -32,13 +28,18 @@ def create_index(path, quadkey_zoom):
     return data
 
 
-def find_quadkeys(geom: Polygon, quadkey_zoom: int) -> List[str]:
+def find_quadkeys(geom, quadkey_zoom: int) -> List[str]:
     """Find quadkeys of mercator tiles that intersect geometry
 
     First, find all tiles that overlap with the geometry's bounding box, then
     intersect each of the mercator tiles with the geometry to be sure that they
     actually intersect.
     """
+    # Dynamic import to remove global dependencies
+    import mercantile
+    from shapely.geometry import asShape
+    from shapely.prepared import prep
+
     tiles = mercantile.tiles(*geom.envelope.bounds, quadkey_zoom)
     prepared_geom = prep(geom)
 

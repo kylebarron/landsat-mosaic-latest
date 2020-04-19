@@ -3,12 +3,12 @@
 from setuptools import find_packages, setup
 
 # Runtime requirements.
-inst_reqs = ["click", "mercantile", "rio-tiler", "shapely"]
+inst_reqs = ["boto3"]
 
 extra_reqs = {
     "test": ["pytest", "pytest-cov", "mock"],
     "dev": ["pytest", "pytest-cov", "pre-commit", "mock"],
-    "script": ["geopandas"]}
+    "script": ["click", "mercantile", "geopandas", "shapely"]}
 
 setup(
     name="landsat-mosaic-latest",
