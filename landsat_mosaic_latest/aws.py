@@ -9,6 +9,8 @@ import boto3
 
 
 def parse_sns_message(body: Dict) -> List[str]:
+    """Parse SNS body
+    """
     message = body['Message']
 
     # I'm not sure if message is always a JSON encoded string, or if sometimes

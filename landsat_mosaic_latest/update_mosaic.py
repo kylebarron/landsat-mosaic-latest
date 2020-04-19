@@ -3,12 +3,26 @@ import json
 import os
 from typing import Optional
 
-from rio_tiler.io.landsat8 import _landsat_get_mtl, landsat_parser
-
 import landsat_mosaic_latest.aws as aws
+from landsat_mosaic_latest.landsat import _landsat_get_mtl, landsat_parser
 
 
-def main(sns_message, dynamodb_table_name, max_cloud_cover, cloud_cover_land):
+def lambda_handler(event, context):
+    # Extract SNS body
+    sns_body = event['Records'][0]['Sns']
+
+    try:
+        main(sns_body)
+        return {'message': 'Success', 'event': event}
+    except Exception as e:
+        return {'message': 'Failed', 'event': event, 'exception': e.args}
+
+
+def main(
+        sns_message,
+        dynamodb_table_name: str = os.environ['DYNAMODB_TABLE_NAME'],
+        max_cloud_cover: float = os.getenv('MAX_CLOUD_COVER', 20),
+        cloud_cover_land: bool = True):
     dynamodb_client = aws.dynamodb_client()
     dynamodb_table = dynamodb_client.Table(dynamodb_table_name)
 
@@ -103,8 +117,3 @@ def get_cloud_cover(scene_id: str, land: bool = True):
     image_attrs = meta['L1_METADATA_FILE']['IMAGE_ATTRIBUTES']
     cloud_key = 'CLOUD_COVER_LAND' if land else 'CLOUD_COVER'
     return image_attrs[cloud_key]
-
-
-# scene_id = scene_ids[0]
-
-# %timeit landsat_parser(scene_ids[0])
