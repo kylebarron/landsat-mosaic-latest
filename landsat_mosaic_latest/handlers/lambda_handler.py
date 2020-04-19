@@ -7,6 +7,10 @@ def lambda_handler(event, context):
 
     try:
         main(sns_body)
-        return {'message': 'Success', 'event': event}
+        return {'message': 'Success', 'event': event, 'statusCode': 200}
     except Exception as e:
-        return {'message': 'Failed', 'event': event, 'exception': e.args}
+        return {
+            'message': 'Failed',
+            'event': event,
+            'exception': e.args,
+            'statusCode': 500}
