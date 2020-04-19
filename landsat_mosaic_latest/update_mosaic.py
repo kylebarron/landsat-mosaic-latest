@@ -7,6 +7,7 @@ from landsat_mosaic_latest.aws import (
     dynamodb_client, fetch_dynamodb, parse_sns_message, write_dynamodb)
 from landsat_mosaic_latest.landsat import _landsat_get_mtl, landsat_parser
 
+from pkg_resources import resource_filename
 
 def main(
         sns_message,
@@ -18,6 +19,8 @@ def main(
 
     # Find new scene ids from SNS message
     scene_ids = parse_sns_message(sns_message)
+
+    index_path = resource_filename('landsat_cogeo_mosaic', 'data/index.jsonl.gz')
 
     for scene_id in scene_ids:
         # Find cloud cover

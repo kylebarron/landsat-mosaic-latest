@@ -2,6 +2,11 @@
 
 from setuptools import find_packages, setup
 
+setup_reqs = ['setuptools >= 38.6.0', 'twine >= 1.11.0']
+
+with open('README.md') as f:
+    readme = f.read()
+
 # Runtime requirements.
 inst_reqs = ["boto3"]
 
@@ -14,7 +19,8 @@ setup(
     name="landsat-mosaic-latest",
     version="0.1.0",
     description="Auto-updating cloudless Landsat mosaic from SNS notifications",
-    long_description=u"Create Cloud Optimized GeoTIFF mosaicsJSON.",
+    long_description=readme,
+    long_description_content_type='text/markdown',
     python_requires=">=3.6",
     classifiers=[
         "Intended Audience :: Information Technology",
@@ -31,6 +37,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=inst_reqs,
+    setup_requires=setup_reqs,
     extras_require=extra_reqs,
     entry_points={
         "console_scripts": [
