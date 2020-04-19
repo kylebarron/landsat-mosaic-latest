@@ -48,7 +48,8 @@ def update_dynamodb_quadkey(dynamodb_table, quadkey, scene_id, path, row):
     # Retrieve existing assets from DynamoDB
     existing = fetch_dynamodb(dynamodb_table, quadkey)
 
-    # If an existing asset has the same path-row as this one, remove it from the list
+    # If an existing asset has the same path-row as this one, remove it from the
+    # list
     new_scene_ids = []
     for existing_scene_id in existing.get('assets', []):
         existing_scene_meta = landsat_parser(existing_scene_id)
@@ -106,4 +107,8 @@ def get_cloud_cover(scene_id: str, land: bool = True):
 
 
 def index_data_path():
-    return str((Path(__file__) / 'data' / 'index.jsonl.gz').resolve())
+    lambda_root = os.getenv('LAMBDA_TASK_ROOT')
+    if not lambda_root:
+        return str((Path(__file__) / 'data' / 'index.jsonl.gz').resolve())
+
+    return f'{lambda_root}/landsat_mosaic_latest/data/index.jsonl.gz'
