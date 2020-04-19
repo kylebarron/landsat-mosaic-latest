@@ -3,6 +3,7 @@ landsat_mosaic_latest.aws: Interact with AWS services
 """
 
 import json
+import os
 from typing import Dict, List
 
 import boto3
@@ -24,7 +25,7 @@ def parse_sns_message(body: Dict) -> List[str]:
     return scene_ids
 
 
-def dynamodb_client(region: str = 'us-west-2'):
+def dynamodb_client(region: str = os.getenv('AWS_REGION', 'us-west-2')):
     return boto3.resource("dynamodb", region_name=region)
 
 
