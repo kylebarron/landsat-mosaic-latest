@@ -48,4 +48,4 @@ def find_quadkeys(geom: Polygon, quadkey_zoom: int) -> List[str]:
         if prepared_geom.intersects(tile_geom):
             intersecting_tiles.append(tile)
 
-    return (mercantile.quadkey(t) for t in tiles)
+    return (mercantile.quadkey(t) for t in intersecting_tiles)
