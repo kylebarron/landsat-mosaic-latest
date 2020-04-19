@@ -1,13 +1,13 @@
 import gzip
 import json
 import os
+from pathlib import Path
 from typing import List, Optional
 
 from landsat_mosaic_latest.aws import (
     dynamodb_client, fetch_dynamodb, parse_sns_message, write_dynamodb)
 from landsat_mosaic_latest.landsat import _landsat_get_mtl, landsat_parser
 
-from pkg_resources import resource_filename
 
 def main(
         sns_message,
@@ -20,7 +20,7 @@ def main(
     # Find new scene ids from SNS message
     scene_ids = parse_sns_message(sns_message)
 
-    index_path = resource_filename('landsat_cogeo_mosaic', 'data/index.jsonl.gz')
+    index_path = index_data_path()
 
     for scene_id in scene_ids:
         # Find cloud cover
@@ -100,3 +100,7 @@ def get_cloud_cover(scene_id: str, land: bool = True):
     image_attrs = meta['L1_METADATA_FILE']['IMAGE_ATTRIBUTES']
     cloud_key = 'CLOUD_COVER_LAND' if land else 'CLOUD_COVER'
     return image_attrs[cloud_key]
+
+
+def index_data_path():
+    return (Path(__file__) / 'data' / 'index.jsonl.gz').resolve()
