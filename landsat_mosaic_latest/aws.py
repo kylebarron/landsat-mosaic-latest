@@ -5,8 +5,10 @@ landsat_mosaic_latest.aws: Interact with AWS services
 import json
 from typing import Dict, List
 
+import boto3
 
-def parse_message(body: Dict) -> List[str]:
+
+def parse_sns_message(body: Dict) -> List[str]:
     message = body['Message']
 
     # I'm not sure if message is always a JSON encoded string, or if sometimes
@@ -18,3 +20,20 @@ def parse_message(body: Dict) -> List[str]:
     keys = [r['s3']['object']['key'] for r in records]
     scene_ids = [key.split('/')[-2] for key in keys]
     return scene_ids
+
+
+def dynamodb_client(region: str = 'us-west-2'):
+    return boto3.resource("dynamodb", region_name=region)
+
+
+def dynamodb_table(client, table_name):
+    return client.Table(table_name)
+
+
+def fetch_dynamodb(table, quadkey: str) -> Dict:
+    return table.get_item(Key={"quadkey": quadkey}).get("Item", {})
+
+
+def write_dynamodb(table, quadkey, assets):
+    item = {"quadkey": quadkey, "assets": assets}
+    table.put_item(Item=item)
