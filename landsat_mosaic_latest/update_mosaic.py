@@ -87,7 +87,9 @@ def find_quadkeys(index_path, path, row,
 
         else:
             index = json.load(f)
-            return index.get(pathrow)
+            return index.get(pathrow, [])
+
+    return []
 
 
 def get_cloud_cover(scene_id: str, land: bool = True):
