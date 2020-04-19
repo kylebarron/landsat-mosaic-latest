@@ -20,6 +20,7 @@ def main(
     # Find new scene ids from SNS message
     scene_ids = parse_sns_message(sns_message)
 
+    # Find filesystem path to index data file
     index_path = index_data_path()
 
     for scene_id in scene_ids:
@@ -45,11 +46,11 @@ def main(
 
 def update_dynamodb_quadkey(dynamodb_table, quadkey, scene_id, path, row):
     # Retrieve existing assets from DynamoDB
-    existing_scene_ids = fetch_dynamodb(dynamodb_table, quadkey)['assets']
+    existing = fetch_dynamodb(dynamodb_table, quadkey)
 
     # If an existing asset has the same path-row as this one, remove it from the list
     new_scene_ids = []
-    for existing_scene_id in existing_scene_ids:
+    for existing_scene_id in existing.get('assets', []):
         existing_scene_meta = landsat_parser(existing_scene_id)
         existing_path = existing_scene_meta['path']
         existing_row = existing_scene_meta['row']
@@ -103,4 +104,4 @@ def get_cloud_cover(scene_id: str, land: bool = True):
 
 
 def index_data_path():
-    return (Path(__file__) / 'data' / 'index.jsonl.gz').resolve()
+    return str((Path(__file__) / 'data' / 'index.jsonl.gz').resolve())
