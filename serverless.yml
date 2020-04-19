@@ -1,0 +1,38 @@
+service: landsat-mosaic-latest
+
+provider:
+  name: aws
+  runtime: python3.7
+  stage: ${opt:stage, 'production'}
+  region: ${opt:region, 'us-west-2'}
+
+  # deploymentBucket: ${opt:bucket}
+
+  # Add other buckets here if needed
+  iamRoleStatements:
+  # -  Effect: "Allow"
+  #    Action:
+  #      - "*"
+  #    Resource:
+  #      - "arn:aws:s3:::${opt:bucket}*"
+  -  Effect: "Allow"
+     Action:
+       - "s3:GetObject"
+       - "s3:HeadObject"
+     Resource:
+       - "arn:aws:s3:::*"
+
+package:
+  artifact: package.zip
+
+functions:
+  dispatcher:
+    handler: landsat_mosaic_latest.handlers.lambda_handler.lambda_handler
+    memorySize: 1024
+    timeout: 10
+    environment:
+      MAX_CLOUD_COVER: ${opt:max-cloud-cover, ''}
+      DYNAMODB_TABLE_NAME: ${opt:table-name}
+      PYTHONWARNINGS: ignore
+    events:
+      - sns: arn:aws:sns:us-west-2:274514004127:NewSceneHTML

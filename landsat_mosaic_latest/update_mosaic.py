@@ -1,27 +1,16 @@
 import gzip
 import json
 import os
-from typing import Optional
+from typing import List, Optional
 
 import landsat_mosaic_latest.aws as aws
 from landsat_mosaic_latest.landsat import _landsat_get_mtl, landsat_parser
 
 
-def lambda_handler(event, context):
-    # Extract SNS body
-    sns_body = event['Records'][0]['Sns']
-
-    try:
-        main(sns_body)
-        return {'message': 'Success', 'event': event}
-    except Exception as e:
-        return {'message': 'Failed', 'event': event, 'exception': e.args}
-
-
 def main(
         sns_message,
         dynamodb_table_name: str = os.environ['DYNAMODB_TABLE_NAME'],
-        max_cloud_cover: float = os.getenv('MAX_CLOUD_COVER', 20),
+        max_cloud_cover: float = float(os.getenv('MAX_CLOUD_COVER', '20')),
         cloud_cover_land: bool = True):
     dynamodb_client = aws.dynamodb_client()
     dynamodb_table = dynamodb_client.Table(dynamodb_table_name)
@@ -70,7 +59,8 @@ def update_dynamodb_quadkey(dynamodb_table, quadkey, scene_id, path, row):
     aws.write_dynamodb(dynamodb_table, quadkey, new_scene_ids)
 
 
-def find_quadkeys(index_path, path, row, jsonl: Optional[bool] = None):
+def find_quadkeys(index_path, path, row,
+                  jsonl: Optional[bool] = None) -> List[str]:
     """Find intersecting quadkeys
     """
     pathrow = path.zfill(3) + row.zfill(3)
@@ -93,17 +83,6 @@ def find_quadkeys(index_path, path, row, jsonl: Optional[bool] = None):
         else:
             index = json.load(f)
             return index.get(pathrow)
-
-
-def get_quadkey_zoom(dynamodb_table):
-    quadkey_zoom = os.getenv('QUADKEY_ZOOM')
-
-    if quadkey_zoom:
-        return int(quadkey_zoom)
-
-    meta = aws.fetch_dynamodb(dynamodb_table, '-1')
-    quadkey_zoom = meta.get('quadkey_zoom', meta['minzoom'])
-    return int(quadkey_zoom)
 
 
 def get_cloud_cover(scene_id: str, land: bool = True):
