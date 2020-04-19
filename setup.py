@@ -3,7 +3,7 @@
 from setuptools import find_packages, setup
 
 # Runtime requirements.
-inst_reqs = ["click", "mercantile", "shapely"]
+inst_reqs = ["click", "mercantile", "rio-tiler", "shapely"]
 
 extra_reqs = {
     "test": ["pytest", "pytest-cov", "mock"],
