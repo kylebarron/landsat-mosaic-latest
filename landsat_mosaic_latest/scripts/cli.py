@@ -48,7 +48,7 @@ def pathrow_index(quadkey_zoom, grid_path, gzip, jsonl):
     else:
         body = text.encode('utf-8')
 
-    return body
+    click.echo(body)
 
 
 def _compress_gz(data: str) -> bytes:
@@ -57,6 +57,8 @@ def _compress_gz(data: str) -> bytes:
     return (
         gzip_compress.compress(data.encode("utf-8")) + gzip_compress.flush())
 
+
+main.add_command(pathrow_index)
 
 if __name__ == '__main__':
     main()
