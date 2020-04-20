@@ -1,5 +1,5 @@
 """
-landsat_mosaic_latest.quadkey_index.py: Create path-row to quadkey index
+landsat_mosaic_latest.pathrow_index.py: Create path-row to quadkey index
 """
 from typing import List
 

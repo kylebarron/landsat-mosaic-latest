@@ -1,2 +1,137 @@
-# landsat-latest
-Auto-updating Landsat mosaic from SNS notifications
+# landsat-mosaic-latest
+
+Auto-updating cloudless Landsat mosaic from SNS notifications.
+
+## Overview
+
+## Install
+
+```
+git clone https://github.com/kylebarron/landsat-mosaic-latest
+cd landsat-mosaic-latest
+pip install .
+```
+
+### Create quadkey index file (optional)
+
+**Unless you have specific requirements, you can skip this section.**
+
+Landsat images are produced in a [grid of _paths_ and
+_rows_](https://landsat.gsfc.nasa.gov/wp-content/uploads/2013/01/wrs2.gif). In
+order to keep things simple and eliminate geospatial dependencies, this package
+relies on a prebuilt index that associates those path-row combinations to the
+mercator tile quadkeys used by the tiler.
+
+By default, this library ships with a worldwide index at quadkey zoom level 8.
+If you need a differing quadkey zoom or want to restrict your mosaic to a
+geographic bounding box (not yet implemented), you can build your own index with
+the following instructions.
+
+There are a few additional dependencies needed to run this script. They aren't
+included in the default requirements list to keep the lambda bundle as small as
+possible. To install these, just run
+
+```bash
+pip install ".[script]"
+```
+
+Then to create the index, run:
+
+```bash
+landsat-mosaic-latest pathrow-index \
+    --quadkey-zoom 8 \
+    --gzip \
+    --jsonl \
+    data/path-row/WRS2_descending.shp \
+    > landsat_mosaic_latest/data/index.jsonl.gz
+```
+
+In this example, a quadkey zoom of 8 is chosen, and the index is built for the
+entire world.
+
+Note it's currently imperative to copy the above line exactly, changing only the
+`quadkey_zoom` argument. It must be created with `--gzip` and `--jsonl` and
+placed into the designated location in order to be properly found during
+runtime.
+
+## Build
+
+If you wish to change the quadkey index file, as described above, make sure you
+do that before building, as that file will be included in the lambda bundle.
+
+Then building is simple: (requires Docker)
+
+```bash
+make package
+```
+
+This creates a `package.zip` file in the current directory with this package's
+code and any required dependencies. This will be uploaded to AWS in the next
+step.
+
+## Deploy
+
+To simplify deployment, this package uses the Serverless framework. [Refer to
+their docs](https://serverless.com/framework/docs/getting-started/) to install
+the `sls` command line library and authorize it with your AWS credentials.
+
+Then it's simple to deploy this stack with a single line:
+
+```bash
+sls deploy --table-name landsat-auto-update --max-cloud-cover 10
+```
+
+- `table-name` is the name given to the DynamoDB table. You'll need to provide this information to the tiler when serving imagery.
+- `max-cloud-cover` is an integer between 0 and 100 that defines the maximum percent cloud cover permitted for new imagery. If a new Landsat scene has cloud cover greater than the given percent, it will not be added to the DynamoDB table.
+
+## Pricing
+
+**\$2.64 per year** is a rough estimate of the cost to keep this DynamoDB table updated.
+
+Note that actually serving imagery using a
+[tiler](https://github.com/developmentseed/awspds-mosaic) is not included in
+this estimate.
+
+### Lambda
+
+**Time**:
+
+- \$ per 100ms: 0.0000016667 (when set to 1024mb memory)
+- Rough # of 100ms when the scene is not cloudy: 10
+- Percentage of time when scene is below max cloud cover: 0.3
+- Scenes per day: [~750](https://www.usgs.gov/faqs/what-are-acquisition-schedules-landsat-satellites?qt-news_science_products=0#qt-news_science_products)
+- Days per year: 365
+
+Roughly \$1.36/year for the time cost with these estimates.
+
+**Requests**:
+
+- \$ 0.20 per 1M requests
+- Scenes per day: 750
+- Days per year: 365
+
+Roughly \$0.05/year.
+
+### DynamoDB
+
+**Reads**:
+
+- Scenes per day: 750
+- Percentage of time when scene is below max cloud cover: 0.3
+- Quadkeys per scene: ~10
+- 1 read per quadkey
+- Days per year: 365
+- \$0.25 per million reads
+
+Roughly \$0.21/year.
+
+**Writes**:
+
+- Scenes per day: 750
+- Percentage of time when scene is below max cloud cover: 0.3
+- Quadkeys per scene: ~10
+- 1 write per quadkey
+- Days per year: 365
+- \$1.25 per million reads
+
+Roughly \$1.02/year.

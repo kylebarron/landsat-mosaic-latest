@@ -14,15 +14,8 @@ provider:
   stage: ${opt:stage, 'production'}
   region: ${opt:region, 'us-west-2'}
 
-  # deploymentBucket: ${opt:bucket}
-
   # Add other buckets here if needed
   iamRoleStatements:
-  # -  Effect: "Allow"
-  #    Action:
-  #      - "*"
-  #    Resource:
-  #      - "arn:aws:s3:::${opt:bucket}*"
     - Effect: "Allow"
       Action:
         - "s3:GetObject"
