@@ -16,10 +16,10 @@ download the entire file.
 
 This file type allows for new cloud-native processing models. For example, you
 can serve a basemap of Landsat 8 imagery using serverless AWS Lambda functions.
-This is a huge advance in technology because it allows for serving satellite
-imagery **without needing to pregenerate and store** any data. This enables huge
-cost savings, especially for hobby projects, where just storing hundreds of GB
-or TB of data would be cost-prohibitive.
+This is a huge advance in technology because it allows for **serving satellite
+imagery without needing to pregenerate and store any imagery**. This enables
+huge cost savings, especially for hobby projects, where just storing hundreds of
+GB or TB of data would be cost-prohibitive.
 
 There exists an AWS Simple Notification Service (SNS)
 [Topic](https://registry.opendata.aws/landsat-8/) that creates notifications
