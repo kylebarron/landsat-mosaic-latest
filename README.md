@@ -1,8 +1,35 @@
 # landsat-mosaic-latest
 
-Auto-updating cloudless Landsat mosaic from SNS notifications.
+Auto-updating cloudless Landsat 8 mosaic from AWS SNS notifications.
 
 ## Overview
+
+AWS stores an [open, freely-accessible data
+set](https://registry.opendata.aws/landsat-8/) of [Landsat
+8](https://www.usgs.gov/land-resources/nli/landsat/landsat-8?qt-science_support_page_related_con=0#)
+imagery. Crucially, this data is stored in [_Cloud-Optimized
+GeoTIFF_](https://www.cogeo.org/) (COG), an extension of the GeoTIFF standard
+which specifies a smart internal layout for image overviews. By reading the
+image's header, an application can understand the byte ranges of different parts
+of the image, and can read them using HTTP range requests without needing to
+download the entire file.
+
+This file type allows for new cloud-native processing models. For example, you
+can serve a basemap of Landsat 8 imagery using serverless AWS Lambda functions.
+This is a huge advance in technology because it allows for serving satellite
+imagery **without needing to pregenerate and store** any data. This enables huge
+cost savings, especially for hobby projects, where just storing hundreds of GB
+or TB of data would be cost-prohibitive.
+
+There exists an AWS Simple Notification Service (SNS)
+[Topic](https://registry.opendata.aws/landsat-8/) that creates notifications
+when new Landsat data are added to the AWS open data set. This library defines
+an AWS Lambda function to run when those notifications are sent, and update a
+DynamoDB database with identifiers for the most recent imagery per mercator tile
+quadkey.
+
+This library does not provide on-the-fly image tiling. For that, look at
+[`awspds-mosaic`](https://github.com/developmentseed/awspds-mosaic).
 
 ## Install
 
@@ -96,7 +123,7 @@ this estimate.
 
 **Time**:
 
-- \$ per 100ms: 0.0000016667 (when set to 1024mb memory)
+- \$ per 100ms: 0.0000016667 (when set to 1024mb memory. From a simple test, it looks like setting to lower memory doesn't reduce cost because it takes proportionally longer.)
 - Rough # of 100ms when the scene is not cloudy: 10
 - Percentage of time when scene is below max cloud cover: 0.3
 - Scenes per day: [~750](https://www.usgs.gov/faqs/what-are-acquisition-schedules-landsat-satellites?qt-news_science_products=0#qt-news_science_products)
