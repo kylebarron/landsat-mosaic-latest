@@ -31,6 +31,14 @@ quadkey.
 This library does not provide on-the-fly image tiling. For that, look at
 [`awspds-mosaic`](https://github.com/developmentseed/awspds-mosaic).
 
+Also note that this library creates a new DynamoDB table but does not populate
+it with initial values. It only updates the table as new imagery comes in. To
+create an inital Landsat mosaic, see
+[`landsat-cogeo-mosaic`](https://github.com/kylebarron/landsat-cogeo-mosaic)
+(note that the quadkey zoom must match; if you don't change the quadkey index
+file below, you must create a mosaic with quadkey zoom 8). Then after the deploy
+step below, upload the starting mosaic to the table.
+
 ## Install
 
 ```
