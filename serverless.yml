@@ -38,7 +38,7 @@ functions:
   dispatcher:
     handler: landsat_mosaic_latest.handlers.lambda_handler.lambda_handler
     memorySize: 1024
-    timeout: 10
+    timeout: 30
     environment:
       MAX_CLOUD_COVER: ${opt:max-cloud-cover, '20'}
       DYNAMODB_TABLE_NAME: ${self:custom.tableName}
