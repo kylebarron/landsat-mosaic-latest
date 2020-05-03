@@ -94,7 +94,7 @@ runtime.
 If you wish to change the quadkey index file, as described above, make sure you
 do that before building, as that file will be included in the lambda bundle.
 
-Then building is simple: (requires Docker)
+Then building is simple: (requires Docker and Make)
 
 ```bash
 make package

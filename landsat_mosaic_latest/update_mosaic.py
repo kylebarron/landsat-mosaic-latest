@@ -24,13 +24,18 @@ def main(
     index_path = index_data_path()
 
     for scene_id in scene_ids:
+        scene_meta = landsat_parser(scene_id)
+
+        # Skip unless real-time (RT) collection
+        if scene_meta['collectionCategory'] != 'RT':
+            continue
+
         # Find cloud cover
         cloud_cover = get_cloud_cover(scene_id, cloud_cover_land)
         if cloud_cover > max_cloud_cover:
             continue
 
         # Find overlapping quadkeys
-        scene_meta = landsat_parser(scene_id)
         path = scene_meta['path']
         row = scene_meta['row']
         quadkeys = find_quadkeys(index_path, path=path, row=row)
