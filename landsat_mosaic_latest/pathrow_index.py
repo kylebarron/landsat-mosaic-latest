@@ -40,7 +40,7 @@ def find_quadkeys(geom, quadkey_zoom: int) -> List[str]:
     from shapely.geometry import asShape
     from shapely.prepared import prep
 
-    tiles = mercantile.tiles(*geom.envelope.bounds, quadkey_zoom)
+    tiles = mercantile.tiles(*geom.bounds, quadkey_zoom)
     prepared_geom = prep(geom)
 
     intersecting_tiles = []
