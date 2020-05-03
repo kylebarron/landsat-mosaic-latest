@@ -63,8 +63,8 @@ def update_dynamodb_quadkey(dynamodb_table, quadkey, scene_id, path, row):
         if (path != existing_path) and (row != existing_row):
             new_scene_ids.append(existing_scene_id)
 
-    # Add new scene id
-    new_scene_ids.append(scene_id)
+    # Add new scene id at beginning
+    new_scene_ids.insert(0, scene_id)
 
     # Write new assets to DynamoDB
     write_dynamodb(dynamodb_table, quadkey, new_scene_ids)

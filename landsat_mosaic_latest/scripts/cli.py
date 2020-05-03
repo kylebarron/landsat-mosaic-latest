@@ -2,7 +2,6 @@ import json
 import zlib
 
 import click
-
 from landsat_mosaic_latest.pathrow_index import create_index
 
 
