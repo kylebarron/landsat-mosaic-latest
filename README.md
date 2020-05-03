@@ -113,7 +113,7 @@ the `sls` command line library and authorize it with your AWS credentials.
 Then it's simple to deploy this stack with a single line:
 
 ```bash
-sls deploy --table-name landsat-auto-update --max-cloud-cover 10
+sls deploy --table-name landsat-auto-update --max-cloud-cover 5
 ```
 
 - `table-name` is the name given to the DynamoDB table. You'll need to provide this information to the tiler when serving imagery.
