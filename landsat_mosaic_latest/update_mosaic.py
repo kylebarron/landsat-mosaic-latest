@@ -60,7 +60,7 @@ def update_dynamodb_quadkey(dynamodb_table, quadkey, scene_id, path, row):
         existing_scene_meta = landsat_parser(existing_scene_id)
         existing_path = existing_scene_meta['path']
         existing_row = existing_scene_meta['row']
-        if (path != existing_path) and (row != existing_row):
+        if (path != existing_path) or (row != existing_row):
             new_scene_ids.append(existing_scene_id)
 
     # Add new scene id at beginning
