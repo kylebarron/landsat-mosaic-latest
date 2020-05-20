@@ -34,10 +34,12 @@ This library does not provide on-the-fly image tiling. For that, look at
 Also note that this library creates a new DynamoDB table but does not populate
 it with initial values. It only updates the table as new imagery comes in. To
 create an inital Landsat mosaic, see
-[`landsat-cogeo-mosaic`](https://github.com/kylebarron/landsat-cogeo-mosaic)
-(note that the quadkey zoom must match; if you don't change the quadkey index
-file below, you must create a mosaic with quadkey zoom 8). Then after the deploy
-step below, upload the starting mosaic to the table.
+[`landsat-cogeo-mosaic`][landsat-cogeo-mosaic] (note that the quadkey zoom must
+match; if you don't change the quadkey index file below, you must create a
+mosaic with quadkey zoom 8). Then after the deploy step below, upload the
+starting mosaic to the table.
+
+[landsat-cogeo-mosaic]: https://github.com/kylebarron/landsat-cogeo-mosaic
 
 ## Install
 
@@ -53,41 +55,39 @@ pip install .
 
 Landsat images are produced in a [grid of _paths_ and
 _rows_](https://landsat.gsfc.nasa.gov/wp-content/uploads/2013/01/wrs2.gif). In
-order to keep things simple and eliminate geospatial dependencies, this package
-relies on a prebuilt index that associates those path-row combinations to the
-mercator tile quadkeys used by the tiler.
+order to keep things simple, eliminate geospatial dependencies, and create
+efficient an MosaicJSON, this package relies on a prebuilt index that associates
+those path-row combinations to the mercator tile quadkeys used by the tiler.
 
 By default, this library ships with a worldwide index at quadkey zoom level 8.
 If you need a differing quadkey zoom or want to restrict your mosaic to a
-geographic bounding box (not yet implemented), you can build your own index with
-the following instructions.
+geographic bounding box, you can build your own index.
 
-There are a few additional dependencies needed to run this script. They aren't
-included in the default requirements list to keep the lambda bundle as small as
-possible. To install these, just run
+The script to create an index is stored in
+[`landsat-cogeo-mosaic`][landsat-cogeo-mosaic]. For full instructions, see its
+[project docs][index_cli].
 
-```bash
-pip install ".[script]"
-```
+[index_cli]: https://kylebarron.dev/landsat-cogeo-mosaic/cli/#index
 
-Then to create the index, run:
+The standard index bundled by default with `landsat-mosaic-latest` is created
+with:
 
 ```bash
-landsat-mosaic-latest pathrow-index \
+landsat-cogeo-mosaic index \
+    `# Path to Shapefile of path-row geometries` \
+    --wrs-path data/WRS2_descending_0/WRS2_descending.shp \
+    `# Path to CSV of scene metadata downloaded from AWS S3` \
+    --scene-path data/scene_list.gz \
+    `# Worldwide bounds` \
+    --bounds '-180,-90,180,90' \
+    `# Quadkey zoom` \
     --quadkey-zoom 8 \
-    --gzip \
-    --jsonl \
-    data/path-row/WRS2_descending.shp \
-    > landsat_mosaic_latest/data/index.jsonl.gz
+    | gzip \
+    > landsat_mosaic_latest/data/index.json.gz
 ```
 
-In this example, a quadkey zoom of 8 is chosen, and the index is built for the
-entire world.
-
-Note it's currently imperative to copy the above line exactly, changing only the
-`quadkey_zoom` argument. It must be created with `--gzip` and `--jsonl` and
-placed into the designated location in order to be properly found during
-runtime.
+Note it's currently imperative to write the index to that exact location in
+order to be properly found during runtime.
 
 ## Build
 
