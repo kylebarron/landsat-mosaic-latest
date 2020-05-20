@@ -38,7 +38,4 @@ setup(
     install_requires=inst_reqs,
     setup_requires=setup_reqs,
     extras_require=extra_reqs,
-    entry_points={
-        "console_scripts": [
-            "landsat-mosaic-latest = landsat_mosaic_latest.scripts.cli:main"]},
 )
