@@ -70,8 +70,7 @@ def update_dynamodb_quadkey(dynamodb_table, quadkey, scene_id, path, row):
     write_dynamodb(dynamodb_table, quadkey, new_scene_ids)
 
 
-def find_quadkeys(index_path, path, row,
-                  jsonl: Optional[bool] = None) -> List[str]:
+def find_quadkeys(index_path, path, row) -> List[str]:
     """Find intersecting quadkeys
     """
     pathrow = path.zfill(3) + row.zfill(3)
@@ -80,20 +79,9 @@ def find_quadkeys(index_path, path, row,
     file_opener = gzip.open if index_path.endswith('.gz') else open
     mode = 'rt' if index_path.endswith('.gz') else 'r'
 
-    # Set jsonl to true if `.json` is in filename
-    jsonl = True if jsonl is None and '.jsonl' in index_path else jsonl
-
     with file_opener(index_path, mode) as f:
-        if jsonl:
-            for line in f:
-                line_dict = json.loads(line)
-                quadkeys = line_dict.get(pathrow)
-                if quadkeys:
-                    return quadkeys
-
-        else:
-            index = json.load(f)
-            return index.get(pathrow, [])
+        index = json.load(f)
+        return index.get(pathrow, [])
 
     return []
 
@@ -114,6 +102,6 @@ def get_cloud_cover(scene_id: str, land: bool = True):
 def index_data_path():
     lambda_root = os.getenv('LAMBDA_TASK_ROOT')
     if not lambda_root:
-        return str((Path(__file__) / 'data' / 'index.jsonl.gz').resolve())
+        return str((Path(__file__) / 'data' / 'index.json.gz').resolve())
 
-    return f'{lambda_root}/landsat_mosaic_latest/data/index.jsonl.gz'
+    return f'{lambda_root}/landsat_mosaic_latest/data/index.json.gz'
