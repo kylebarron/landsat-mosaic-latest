@@ -12,8 +12,7 @@ inst_reqs = ["boto3"]
 
 extra_reqs = {
     "test": ["pytest", "pytest-cov", "mock"],
-    "dev": ["pytest", "pytest-cov", "pre-commit", "mock"],
-    "script": ["click", "mercantile", "geopandas", "shapely"]}
+    "dev": ["pytest", "pytest-cov", "pre-commit", "mock"]}
 
 setup(
     name="landsat-mosaic-latest",
