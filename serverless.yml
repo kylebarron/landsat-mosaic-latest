@@ -5,8 +5,9 @@
 service: landsat-mosaic-latest
 
 custom:
-  # resources/dynamodb-table.yml relies on this
-  tableName: ${opt:table-name}
+  # resources/dynamodb-table.yml relies on these keys
+  tableName: ${opt:table-name, 'landsat-mosaic-latest'}
+  cloudlessTableName: ${opt:table-name, 'landsat-mosaic-latest-cloudless'}
 
 provider:
   name: aws
@@ -30,6 +31,7 @@ provider:
       # the specific table for the stage
       Resource:
         - "Fn::GetAtt": [ LandsatMosaicLatestTable, Arn ]
+        - "Fn::GetAtt": [ LandsatMosaicLatestCloudlessTable, Arn ]
 
 package:
   artifact: package.zip
@@ -40,8 +42,9 @@ functions:
     memorySize: 1024
     timeout: 30
     environment:
-      MAX_CLOUD_COVER: ${opt:max-cloud-cover, '20'}
+      MAX_CLOUD_COVER: ${opt:max-cloud-cover, '5'}
       DYNAMODB_TABLE_NAME: ${self:custom.tableName}
+      DYNAMODB_CLOUDLESS_TABLE_NAME: ${self:custom.cloudlessTableName}
       PYTHONWARNINGS: ignore
     events:
       - sns: arn:aws:sns:us-west-2:274514004127:NewSceneHTML

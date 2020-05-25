@@ -1,9 +1,23 @@
 # From https://serverless-stack.com/chapters/configure-dynamodb-in-serverless.html
+# Create two DynamoDB tables, one to hold an "absolute latest" and one
+# to hold a "cloudless latest"
 Resources:
   LandsatMosaicLatestTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: ${self:custom.tableName}
+      AttributeDefinitions:
+        - AttributeName: quadkey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: quadkey
+          KeyType: HASH
+      # Set the capacity to auto-scale
+      BillingMode: PAY_PER_REQUEST
+  LandsatMosaicLatestCloudlessTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:custom.cloudlessTableName}
       AttributeDefinitions:
         - AttributeName: quadkey
           AttributeType: S
