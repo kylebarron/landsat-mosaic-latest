@@ -11,11 +11,25 @@ from landsat_mosaic_latest.landsat import _landsat_get_mtl, landsat_parser
 
 def main(
         sns_message,
-        dynamodb_table_name: str = os.environ['DYNAMODB_TABLE_NAME'],
+        dynamodb_cloudless_table_name: str = os.getenv(
+            'DYNAMODB_CLOUDLESS_TABLE_NAME'),
+        dynamodb_table_name: str = os.getenv('DYNAMODB_TABLE_NAME'),
         max_cloud_cover: float = float(os.getenv('MAX_CLOUD_COVER', '20')),
         cloud_cover_land: bool = True):
+
+    if not dynamodb_table_name and not dynamodb_cloudless_table_name:
+        raise ValueError(
+            'Either dynamodb_table_name or dynamodb_cloudless_table_name must be provided'
+        )
+
     client = dynamodb_client()
-    dynamodb_table = client.Table(dynamodb_table_name)
+
+    dynamodb_table = None
+    dynamodb_cloudless_table = None
+    if dynamodb_table_name:
+        dynamodb_table = client.Table(dynamodb_table_name)
+    if dynamodb_cloudless_table_name:
+        dynamodb_cloudless_table = client.Table(dynamodb_cloudless_table_name)
 
     # Find new scene ids from SNS message
     scene_ids = parse_sns_message(sns_message)
@@ -32,8 +46,6 @@ def main(
 
         # Find cloud cover
         cloud_cover = get_cloud_cover(scene_id, cloud_cover_land)
-        if cloud_cover > max_cloud_cover:
-            continue
 
         # Find overlapping quadkeys
         path = scene_meta['path']
@@ -41,12 +53,21 @@ def main(
         quadkeys = find_quadkeys(index_path, path=path, row=row)
 
         for quadkey in quadkeys:
-            update_dynamodb_quadkey(
-                dynamodb_table=dynamodb_table,
-                quadkey=quadkey,
-                scene_id=scene_id,
-                path=path,
-                row=row)
+            if dynamodb_table:
+                update_dynamodb_quadkey(
+                    dynamodb_table=dynamodb_table,
+                    quadkey=quadkey,
+                    scene_id=scene_id,
+                    path=path,
+                    row=row)
+
+            if dynamodb_cloudless_table and cloud_cover <= max_cloud_cover:
+                update_dynamodb_quadkey(
+                    dynamodb_table=dynamodb_cloudless_table,
+                    quadkey=quadkey,
+                    scene_id=scene_id,
+                    path=path,
+                    row=row)
 
 
 def update_dynamodb_quadkey(dynamodb_table, quadkey, scene_id, path, row):
