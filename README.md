@@ -226,7 +226,7 @@ cogeo-mosaic upload \
 
 ## Pricing
 
-**\$2.64 per year** is a rough estimate of the cost to keep this DynamoDB table updated.
+**\$2.64 per year** is a rough estimate of the cost to keep each DynamoDB table updated.
 
 Note that actually serving imagery using a
 [tiler](https://github.com/developmentseed/awspds-mosaic) is not included in
