@@ -7,7 +7,7 @@ service: landsat-mosaic-latest
 custom:
   # resources/dynamodb-table.yml relies on these keys
   tableName: ${opt:table-name, 'landsat-mosaic-latest'}
-  cloudlessTableName: ${opt:table-name, 'landsat-mosaic-latest-cloudless'}
+  cloudlessTableName: ${opt:cloudless-table-name, 'landsat-mosaic-latest-cloudless'}
 
 provider:
   name: aws

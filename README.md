@@ -1,6 +1,6 @@
 # landsat-mosaic-latest
 
-Auto-updating cloudless Landsat 8 mosaic from AWS SNS notifications.
+Auto-updating Landsat 8 mosaics from AWS SNS notifications.
 
 ## Overview
 
@@ -24,22 +24,16 @@ GB or TB of data would be cost-prohibitive.
 There exists an AWS Simple Notification Service (SNS)
 [Topic](https://registry.opendata.aws/landsat-8/) that creates notifications
 when new Landsat data are added to the AWS open data set. This library defines
-an AWS Lambda function to run when those notifications are sent, and update a
-DynamoDB database with identifiers for the most recent imagery per mercator tile
-quadkey.
+an AWS Lambda function to run when those notifications are sent, and update two
+DynamoDB databases with identifiers for the most recent imagery per mercator
+tile.
 
 This library does not provide on-the-fly image tiling. For that, look at
-[`awspds-mosaic`](https://github.com/developmentseed/awspds-mosaic).
+[`awspds-mosaic`](https://github.com/kylebarron/awspds-mosaic).
 
 Also note that this library creates a new DynamoDB table but does not populate
-it with initial values. It only updates the table as new imagery comes in. To
-create an inital Landsat mosaic, see
-[`landsat-cogeo-mosaic`][landsat-cogeo-mosaic] (note that the quadkey zoom must
-match; if you don't change the quadkey index file below, you must create a
-mosaic with quadkey zoom 8). Then after the deploy step below, upload the
-starting mosaic to the table.
-
-[landsat-cogeo-mosaic]: https://github.com/kylebarron/landsat-cogeo-mosaic
+it with initial values: it only updates the table as new imagery comes in. See
+instructions below to create an initial Landsat mosaic.
 
 ## Install
 
@@ -110,14 +104,125 @@ To simplify deployment, this package uses the Serverless framework. [Refer to
 their docs](https://serverless.com/framework/docs/getting-started/) to install
 the `sls` command line library and authorize it with your AWS credentials.
 
+By default deployment creates _two_ DynamoDB tables, one for the absolute latest
+imagery, another for the latest _low-cloud_ imagery.
+
 Then it's simple to deploy this stack with a single line:
 
 ```bash
-sls deploy --table-name landsat-auto-update --max-cloud-cover 5
+sls deploy \
+    --table-name landsat-mosaic-latest \
+    --cloudless-table-name landsat-mosaic-latest-cloudless \
+    --max-cloud-cover 5
 ```
 
-- `table-name` is the name given to the DynamoDB table. You'll need to provide this information to the tiler when serving imagery.
-- `max-cloud-cover` is an integer between 0 and 100 that defines the maximum percent cloud cover permitted for new imagery. If a new Landsat scene has cloud cover greater than the given percent, it will not be added to the DynamoDB table.
+- `table-name` is the name given to the DynamoDB table without a cloud cover filter. You'll need to provide this information to the tiler when serving imagery. Default: `landsat-mosaic-latest-cloudless`.
+- `cloudless-table-name` is the name given to the DynamoDB table that uses the cloud cover filter below. Default `landsat-mosaic-latest`.
+- `max-cloud-cover` is an integer between 0 and 100 that defines the maximum percent cloud cover permitted for new imagery into the cloudless DynamoDB table. If a new Landsat scene has cloud cover greater than the given percent, it will only be added to the non-cloudless DynamoDB table. Default `5`.
+
+## Upload a base MosaicJSON
+
+This library creates a new DynamoDB table but does not populate it with initial
+values: it only updates the table as new imagery comes in. To create an inital
+Landsat mosaic, we'll use [`landsat-cogeo-mosaic`][landsat-cogeo-mosaic].
+
+Note that when creating an initial MosaicJSON, you should use the same path-row
+index as in the serverless function. The below commands point to the default,
+bundled `index.json.gz`.
+
+[landsat-cogeo-mosaic]: https://github.com/kylebarron/landsat-cogeo-mosaic
+
+### Setup
+
+Install `cogeo-mosaic` and `landsat-cogeo-mosaic`:
+
+```
+pip install "cogeo-mosaic>=3.0a3" landsat-cogeo-mosaic
+```
+
+#### Create SQLite database of Landsat 8 metadata
+
+For up-to-date instructions, see [`landsat-cogeo-mosaic` docs][landsat-cogeo-mosaic-docs]. But it's roughly:
+
+[landsat-cogeo-mosaic-docs]: https://kylebarron.dev/landsat-cogeo-mosaic/examples/global/
+
+```
+git clone https://github.com/kylebarron/landsat-cogeo-mosaic/
+cd landsat-cogeo-mosaic
+mkdir -p data/
+aws s3 cp s3://landsat-pds/c1/L8/scene_list.gz data/
+gunzip -c data/scene_list.gz > data/scene_list
+cd data/
+sqlite3 scene_list.db < ../scripts/csv_import.sql
+cd -
+```
+
+Then `scene_list.db` is the database to be used with the `--sqlite-path`
+argument below.
+
+### Latest Cloudless
+
+Some Landsat 8 path-row combinations have _never_ had a scene with cloud cover
+<5%. This command will automatically relax the `--max-cloud` restriction until
+it finds a result for each path-row.
+
+Assuming you have cloned and are in the `landsat-mosaic-latest` repository:
+
+```bash
+landsat-cogeo-mosaic create-from-db \
+    `# Path to the sqlite database file` \
+    --sqlite-path ../landsat-cogeo-mosaic/data/scene_list.db \
+    `# Path to the path-row geometry file` \
+    --pathrow-index landsat_mosaic_latest/data/index.json.gz \
+    `# Min zoom of mosaic, 7 is a good default for Landsat` \
+    --min-zoom 7 \
+    `# Max zoom of mosaic, 12 is a good default for Landsat` \
+    --max-zoom 12 \
+    `# Maximum cloud cover. This means 5%` \
+    --max-cloud 5 \
+    `# Preference for choosing the asset for a tile` \
+    --sort-preference newest \
+    > mosaic_cloudless_latest.json
+```
+
+### Latest
+
+This is almost the same as the latest cloudless command, except that it removes
+the `--max-cloud` argument.
+
+Assuming you have cloned and are in the `landsat-mosaic-latest` repository:
+
+```bash
+landsat-cogeo-mosaic create-from-db \
+    `# Path to the sqlite database file` \
+    --sqlite-path ../landsat-cogeo-mosaic/data/scene_list.db \
+    `# Path to the path-row geometry file` \
+    --pathrow-index landsat_mosaic_latest/data/index.json.gz \
+    `# Min zoom of mosaic, 7 is a good default for Landsat` \
+    --min-zoom 7 \
+    `# Max zoom of mosaic, 12 is a good default for Landsat` \
+    --max-zoom 12 \
+    `# Preference for choosing the asset for a tile` \
+    --sort-preference newest \
+    > mosaic_latest.json
+```
+
+### Upload to DynamoDB
+
+Then upload these two generated MosaicJSON files to DynamoDB. The `--url`
+argument must match the names given to the DynamoDB tables in the `sls deploy`
+step.
+
+**Note: This will overwrite any existing data in the DynamoDB table**.
+
+```bash
+cogeo-mosaic upload \
+    --url 'dynamodb://us-west-2/landsat-mosaic-latest' \
+    mosaic_latest.json
+cogeo-mosaic upload \
+    --url 'dynamodb://us-west-2/landsat-mosaic-latest-cloudless' \
+    mosaic_cloudless_latest.json
+```
 
 ## Pricing
 
