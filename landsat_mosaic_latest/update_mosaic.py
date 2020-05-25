@@ -2,7 +2,7 @@ import gzip
 import json
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from landsat_mosaic_latest.aws import (
     dynamodb_client, fetch_dynamodb, parse_sns_message, write_dynamodb)
